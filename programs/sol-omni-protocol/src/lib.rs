@@ -10,7 +10,6 @@ declare_id!("tyWeb5FudPxigpWFYeCP9yKwYHBxsqB3jwJa6bjzTJn");
 #[program]
 pub mod sol_omni_protocol {
     use super::*;
-    use crate::instructions::*;
 
     pub fn initialize_company(
         ctx: Context<InitializeCompany>,
@@ -34,5 +33,12 @@ pub mod sol_omni_protocol {
         price: u64,
     ) -> Result<()> {
         instructions::create_shipment::exec_create_shipment(ctx, tracking_id, price)
+    }
+    pub fn update_location(ctx: Context<UpdateLocation>, lat: f64, lng: f64) -> Result<()> {
+        instructions::update_location::exec_update_location(ctx, lat, lng)
+    }
+
+    pub fn emergency_swap(ctx: Context<EmergencySwap>) -> Result<()> {
+        instructions::emergency_swap::exec_emergency_swap(ctx)
     }
 }

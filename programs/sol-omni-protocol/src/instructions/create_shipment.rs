@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
-use crate::state::*;
 use crate::errors::OmniError;
+use crate::state::*;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(tracking_id: String, price: u64)]
@@ -23,13 +23,17 @@ pub struct CreateShipment<'info> {
 
     #[account(mut)]
     pub sender: Signer<'info>,
-    
+
     pub receiver: SystemAccount<'info>,
 
     pub system_program: Program<'info, System>,
 }
 
-pub fn exec_create_shipment(ctx: Context<CreateShipment>, tracking_id: String, price: u64) -> Result<()> {
+pub fn exec_create_shipment(
+    ctx: Context<CreateShipment>,
+    tracking_id: String,
+    price: u64,
+) -> Result<()> {
     let shipment = &mut ctx.accounts.shipment;
     let company = &mut ctx.accounts.company;
 

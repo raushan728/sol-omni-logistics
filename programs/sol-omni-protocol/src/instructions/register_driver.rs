@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
-use crate::state::*;
 use crate::errors::OmniError;
+use crate::state::*;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(name: String, license_no: String)]
@@ -30,11 +30,18 @@ pub struct RegisterDriver<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn exec_register_driver(ctx: Context<RegisterDriver>, name: String, license_no: String) -> Result<()> {
+pub fn exec_register_driver(
+    ctx: Context<RegisterDriver>,
+    name: String,
+    license_no: String,
+) -> Result<()> {
     let driver = &mut ctx.accounts.driver_profile;
     let company = &mut ctx.accounts.company;
 
-    require!(name.len() > 0 && license_no.len() > 0, OmniError::InvalidLocation);
+    require!(
+        name.len() > 0 && license_no.len() > 0,
+        OmniError::InvalidLocation
+    );
 
     driver.company = company.key();
     driver.wallet = ctx.accounts.driver_wallet.key();
@@ -46,7 +53,11 @@ pub fn exec_register_driver(ctx: Context<RegisterDriver>, name: String, license_
     driver.bump = ctx.bumps.driver_profile;
     company.total_drivers += 1;
 
-    msg!("Driver Registered: {} for Company: {}", driver.name, company.name);
+    msg!(
+        "Driver Registered: {} for Company: {}",
+        driver.name,
+        company.name
+    );
     msg!("Total Drivers in Fleet: {}", company.total_drivers);
 
     Ok(())
