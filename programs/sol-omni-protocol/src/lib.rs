@@ -41,11 +41,20 @@ pub mod sol_omni_protocol {
     pub fn emergency_swap(ctx: Context<EmergencySwap>) -> Result<()> {
         instructions::emergency_swap::exec_emergency_swap(ctx)
     }
-     pub fn confirm_delivery(ctx: Context<ConfirmDelivery>) -> Result<()> {
+    pub fn confirm_delivery(ctx: Context<ConfirmDelivery>) -> Result<()> {
         instructions::confirm_delivery::exec_confirm_delivery(ctx)
     }
 
     pub fn deposit_gas(ctx: Context<DepositToGasTank>, amount: u64) -> Result<()> {
         instructions::deposit_to_gas_tank::exec_deposit_to_gas_tank(ctx, amount)
+    }
+    pub fn raise_dispute(ctx: Context<RaiseDispute>, reason_hash: String) -> Result<()> {
+        instructions::raise_dispute::exec_raise_dispute(ctx, reason_hash)
+    }
+    pub fn resolve_dispute(ctx: Context<ResolveDispute>, winner_takes_all: bool) -> Result<()> {
+        instructions::resolve_dispute::exec_resolve_dispute(ctx, winner_takes_all)
+    }
+    pub fn update_settings(ctx: Context<UpdateSettings>, new_name: Option<String>) -> Result<()> {
+        instructions::update_settings::exec_update_settings(ctx, new_name)
     }
 }

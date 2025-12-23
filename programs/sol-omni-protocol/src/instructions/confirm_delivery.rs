@@ -1,13 +1,13 @@
-use anchor_lang::prelude::*;
-use crate::state::*;
 use crate::errors::OmniError;
+use crate::state::*;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct ConfirmDelivery<'info> {
     // Close the shipment account and transfer the balance to admin
     #[account(
         mut,
-        close = admin, 
+        close = admin,
         seeds = [b"shipment", shipment.tracking_id.as_bytes()],
         bump = shipment.bump,
         constraint = shipment.status != ShipmentStatus::Delivered @ OmniError::AlreadyDelivered
