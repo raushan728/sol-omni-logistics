@@ -41,4 +41,11 @@ pub mod sol_omni_protocol {
     pub fn emergency_swap(ctx: Context<EmergencySwap>) -> Result<()> {
         instructions::emergency_swap::exec_emergency_swap(ctx)
     }
+     pub fn confirm_delivery(ctx: Context<ConfirmDelivery>) -> Result<()> {
+        instructions::confirm_delivery::exec_confirm_delivery(ctx)
+    }
+
+    pub fn deposit_gas(ctx: Context<DepositToGasTank>, amount: u64) -> Result<()> {
+        instructions::deposit_to_gas_tank::exec_deposit_to_gas_tank(ctx, amount)
+    }
 }
