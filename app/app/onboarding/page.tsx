@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Environment, Float, Stars } from "@react-three/drei";
 import { Suspense, useEffect, useState } from "react";
 import ThreeCard from "../../components/ThreeCard";
+import RegistrationForm from "../../components/RegistrationForm";
 import useOmniProgram, { UserRole } from "../../hooks/useOmniProgram";
 import { useRouter } from "next/navigation";
 
@@ -12,15 +13,10 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<UserRole>("GUEST");
-
-  // Lifted Hover State
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (wallet) {
-      checkUserRole().then((res) => setRole(res.role));
-    }
-  }, [wallet, checkUserRole]);
+  // Modal State
+  const [showForm, setShowForm] = useState<"company" | "driver" | null>(null);
 
   const handleSelectRole = async (selectedRole: UserRole) => {
     if (!wallet) {
@@ -28,7 +24,14 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Special quick path for guest
+    if (selectedRole === "GUEST") {
+      router.push("/track");
+      return;
+    }
+
     setLoading(true);
+    // Real check
     const result = await checkUserRole();
     setLoading(false);
 
@@ -36,16 +39,16 @@ export default function OnboardingPage() {
       if (result.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else {
-        router.push("/admin/register");
+        // Show Registration Form for Company
+        setShowForm("company");
       }
     } else if (selectedRole === "DRIVER") {
       if (result.role === "DRIVER") {
         router.push("/driver/dashboard");
       } else {
-        router.push("/driver/register");
+        // Show Registration Form for Driver
+        setShowForm("driver");
       }
-    } else {
-      router.push("/track");
     }
   };
 
@@ -66,7 +69,7 @@ export default function OnboardingPage() {
             <Stars
               radius={100}
               depth={50}
-              count={5000}
+              count={5000} // Ensuring visuals match
               factor={4}
               saturation={0}
               fade
@@ -74,41 +77,46 @@ export default function OnboardingPage() {
             />
 
             <Float speed={1} rotationIntensity={0.1} floatIntensity={0.1}>
-              {/* Admin Card */}
-              <ThreeCard
-                position={[-4, 0, 0]}
-                role="LOGISTICS PROVIDER"
-                title="Enterprise Portal"
-                color="#00f3ff" // Cyan
-                iconType="warehouse"
-                onClick={() => handleSelectRole("ADMIN")}
-                isHovered={hoveredCard === "ADMIN"}
-                onHover={(h) => setHoveredCard(h ? "ADMIN" : null)}
-              />
+              {/* Only show cards if form is NOT showing */}
+              {!showForm && (
+                <>
+                  {/* Admin Card */}
+                  <ThreeCard
+                    position={[-4, 0, 0]}
+                    role="LOGISTICS PROVIDER"
+                    title="Enterprise Portal"
+                    color="#00f3ff" // Cyan
+                    iconType="warehouse"
+                    onClick={() => handleSelectRole("ADMIN")}
+                    isHovered={hoveredCard === "ADMIN"}
+                    onHover={(h) => setHoveredCard(h ? "ADMIN" : null)}
+                  />
 
-              {/* Driver Card */}
-              <ThreeCard
-                position={[0, 0, 0]}
-                role="DELIVERY PARTNER"
-                title="Fleet App"
-                color="#bd00ff" // Purple
-                iconType="truck" // Truck representation
-                onClick={() => handleSelectRole("DRIVER")}
-                isHovered={hoveredCard === "DRIVER"}
-                onHover={(h) => setHoveredCard(h ? "DRIVER" : null)}
-              />
+                  {/* Driver Card */}
+                  <ThreeCard
+                    position={[0, 0, 0]}
+                    role="DELIVERY PARTNER"
+                    title="Fleet App"
+                    color="#bd00ff" // Purple
+                    iconType="truck" // Truck representation
+                    onClick={() => handleSelectRole("DRIVER")}
+                    isHovered={hoveredCard === "DRIVER"}
+                    onHover={(h) => setHoveredCard(h ? "DRIVER" : null)}
+                  />
 
-              {/* Customer Card */}
-              <ThreeCard
-                position={[4, 0, 0]}
-                role="CUSTOMER"
-                title="Track Package"
-                color="#00ff9d" // Green
-                iconType="package"
-                onClick={() => handleSelectRole("GUEST")}
-                isHovered={hoveredCard === "GUEST"}
-                onHover={(h) => setHoveredCard(h ? "GUEST" : null)}
-              />
+                  {/* Customer Card */}
+                  <ThreeCard
+                    position={[4, 0, 0]}
+                    role="CUSTOMER"
+                    title="Track Package"
+                    color="#00ff9d" // Green
+                    iconType="package"
+                    onClick={() => handleSelectRole("GUEST")}
+                    isHovered={hoveredCard === "GUEST"}
+                    onHover={(h) => setHoveredCard(h ? "GUEST" : null)}
+                  />
+                </>
+              )}
             </Float>
           </Suspense>
         </Canvas>
@@ -120,6 +128,21 @@ export default function OnboardingPage() {
             VERIFYING CREDENTIALS...
           </div>
         </div>
+      )}
+
+      {showForm && (
+        <RegistrationForm
+          type={showForm}
+          onSuccess={() => {
+            setShowForm(null);
+            // After success, re-check role and route
+            checkUserRole().then((res) => {
+              if (res.role === "ADMIN") router.push("/admin/dashboard");
+              if (res.role === "DRIVER") router.push("/driver/dashboard");
+            });
+          }}
+          onCancel={() => setShowForm(null)}
+        />
       )}
     </div>
   );
