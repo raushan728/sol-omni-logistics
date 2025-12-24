@@ -109,20 +109,26 @@ export default function useOmniProgram() {
   );
 
   const registerDriver = useCallback(
-    async (name: string, license: string) => {
+    async (name: string, license: string, driverKey: string) => {
       if (!program || !wallet) return null;
       try {
+        const driverWallet = new PublicKey(driverKey);
         const [driverPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("driver"), wallet.publicKey.toBuffer()],
+          [Buffer.from("driver"), driverWallet.toBuffer()],
+          PROGRAM_ID
+        );
+        const [companyPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("company"), wallet.publicKey.toBuffer()],
           PROGRAM_ID
         );
 
         const tx = await program.methods
           .registerDriver(name, license)
           .accounts({
-            driver: driverPda,
-            driverWallet: wallet.publicKey,
-            company: null, // Depending on if driver registers self or company adds them. Assuming self-reg for now.
+            driverProfile: driverPda,
+            company: companyPda,
+            driverWallet: driverWallet,
+            admin: wallet.publicKey,
             systemProgram: web3.SystemProgram.programId,
           } as any)
           .rpc();
@@ -135,29 +141,44 @@ export default function useOmniProgram() {
     [program, wallet]
   );
 
-  const getAllShipments = useCallback(async () => {
-    if (!program) return [];
-    try {
-      const shipments = await program.account.shipment.all();
-      // Transform data if necessary, or return raw
-      return shipments;
-    } catch (err) {
-      console.error("Failed to fetch shipments:", err);
-      return [];
-    }
-  }, [program]);
+  const getAllShipments = useCallback(
+    async (companyPda?: PublicKey) => {
+      if (!program) return [];
+      try {
+        let filters: any[] = [];
+        if (companyPda) {
+          filters.push({
+            memcmp: {
+              offset: 8, // Discriminator (8) + Company is 1st field
+              bytes: companyPda.toBase58(),
+            },
+          });
+        }
+        const shipments = await program.account.shipment.all(filters);
+        return shipments;
+      } catch (err) {
+        console.error("Failed to fetch shipments:", err);
+        return [];
+      }
+    },
+    [program]
+  );
 
-  // Fetch single shipment by tracking ID logic would typically query filters.
-  // For now, filtering client side from all() is safer without knowing exact index structure.
   const getShipment = useCallback(
     async (trackingId: string) => {
       if (!program) return null;
       try {
-        const shipments = await program.account.shipment.all();
-        // Assuming shipment account has a 'trackingId' field
-        return shipments.find(
-          (s) => (s.account as any).trackingId === trackingId
+        const [shipmentPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("shipment"), Buffer.from(trackingId)],
+          PROGRAM_ID
         );
+        const shipmentAccount = await program.account.shipment.fetch(
+          shipmentPda
+        );
+        return {
+          publicKey: shipmentPda,
+          account: shipmentAccount,
+        };
       } catch (err) {
         console.error("Failed to fetch shipment:", err);
         return null;
@@ -174,15 +195,8 @@ export default function useOmniProgram() {
           [Buffer.from("driver"), wallet.publicKey.toBuffer()],
           PROGRAM_ID
         );
-
-        // Assuming contract takes integer representation e.g. * 10^6
-        // Or if it takes strings. Let's assume strings for simplicity/safety in this demo context
-        // User request says "updateLocation instruction".
-        // We will pass them as string to avoid precision loss issues unless we know IDL types.
-        // Actually best to pass standard numbers and let Anchor handle if it's f64, or cast to BN if needed.
-        // Let's assume standard number for now.
         const tx = await program.methods
-          .updateLocation(lat, lng) // IDL expects f64 (number)
+          .updateLocation(lat, lng)
           .accounts({
             driver: driverPda,
             signer: wallet.publicKey,
@@ -198,28 +212,44 @@ export default function useOmniProgram() {
   );
 
   const createShipment = useCallback(
-    async (receiver: string, price: number, trackingId: string) => {
+    async (
+      receiver: string,
+      price: number,
+      trackingId: string,
+      driverKey?: string
+    ) => {
       if (!program || !wallet) return null;
       try {
-        // Need to find PDA for the new shipment
-        // Assuming shipment PDA is seeded by "shipment" + trackingId
+        if (!trackingId)
+          throw new Error("Tracking ID is required for PDA derivation");
+
         const [shipmentPda] = PublicKey.findProgramAddressSync(
           [Buffer.from("shipment"), Buffer.from(trackingId)],
-          PROGRAM_ID
+          program.programId
         );
 
-        // Also need company PDA to link it?
-        // Or driver? The prompt says "fields: Receiver Wallet, Tracking ID, Price".
-        // IDL likely requires: shipment account, signer, maybe system program.
+        console.log("Derived Shipment PDA:", shipmentPda.toString());
 
-        // Correcting based on error: Expected [trackingId, price]
-        // Receiver is likely an an account, not an argument.
+        const [companyPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("company"), wallet.publicKey.toBuffer()],
+          program.programId
+        );
+
+        // Determine Driver to Assign (Default to Admin/Sender if none selected)
+        let driverToAssign = wallet.publicKey;
+        if (driverKey) {
+          driverToAssign = new PublicKey(driverKey);
+        }
+        console.log("Assigning Driver (Direct):", driverToAssign.toString());
+
         const tx = await program.methods
           .createShipment(trackingId, new BN(price * 1000000000))
           .accounts({
             shipment: shipmentPda,
-            receiver: new PublicKey(receiver), // Receiver passed as account
-            admin: wallet.publicKey,
+            company: companyPda,
+            sender: wallet.publicKey,
+            driverToAssign: driverToAssign, // New IDL Field
+            receiver: new PublicKey(receiver),
             systemProgram: web3.SystemProgram.programId,
           } as any)
           .rpc();
@@ -290,7 +320,6 @@ export default function useOmniProgram() {
         console.warn(
           "toggleStatus instruction not found in IDL. Mocking success."
         );
-        // In a real update, this would call program.methods.updateDriverStatus(status)...
         return "mock_tx_signature";
       } catch (err) {
         console.error("Toggle Status failed:", err);
@@ -304,6 +333,10 @@ export default function useOmniProgram() {
     async (trackingId: string, driverKey: string) => {
       if (!program || !wallet) return null;
       try {
+        console.log("Starting Emergency Swap...");
+        console.log("Tracking ID:", trackingId);
+        console.log("Driver Key:", driverKey);
+
         const [shipmentPda] = PublicKey.findProgramAddressSync(
           [Buffer.from("shipment"), Buffer.from(trackingId)],
           PROGRAM_ID
@@ -313,21 +346,32 @@ export default function useOmniProgram() {
           PROGRAM_ID
         );
         const driverWallet = new PublicKey(driverKey);
+
+        // DERIVE DRIVER PROFILE PDA
         const [driverProfilePda] = PublicKey.findProgramAddressSync(
           [Buffer.from("driver"), driverWallet.toBuffer()],
           PROGRAM_ID
         );
+
+        console.log("Shipment PDA:", shipmentPda.toString());
+        console.log("Driver PDA Derived:", driverProfilePda.toString());
+        console.log("Driver Wallet:", driverWallet.toString());
 
         const tx = await program.methods
           .emergencySwap()
           .accounts({
             shipment: shipmentPda,
             company: companyPda,
-            newDriverProfile: driverProfilePda,
-            newDriverWallet: driverWallet,
+            newDriverProfile: driverProfilePda, // Must match IDL: new_driver_profile
+            newDriverWallet: driverWallet, // Must match IDL: new_driver_wallet
             admin: wallet.publicKey,
+            // Note: If IDL has system_program? Check IDL.
+            // IDL for emergency_swap: shipment, company, new_driver_profile, new_driver_wallet, admin.
+            // No system_program in IDL snippet for emergency_swap.
           } as any)
           .rpc();
+
+        console.log("Emergency Swap Signature:", tx);
         return tx;
       } catch (err) {
         console.error("Emergency Swap failed:", err);
@@ -337,16 +381,28 @@ export default function useOmniProgram() {
     [program, wallet]
   );
 
-  const getAllDrivers = useCallback(async () => {
-    if (!program) return [];
-    try {
-      const drivers = await program.account.driver.all();
-      return drivers;
-    } catch (err) {
-      console.error("Failed to fetch drivers:", err);
-      return [];
-    }
-  }, [program]);
+  const getAllDrivers = useCallback(
+    async (companyPda?: PublicKey) => {
+      if (!program) return [];
+      try {
+        let filters: any[] = [];
+        if (companyPda) {
+          filters.push({
+            memcmp: {
+              offset: 8, // Discriminator (8) + Company is 1st field
+              bytes: companyPda.toBase58(),
+            },
+          });
+        }
+        const drivers = await program.account.driver.all(filters);
+        return drivers;
+      } catch (err) {
+        console.error("Failed to fetch drivers:", err);
+        return [];
+      }
+    },
+    [program]
+  );
 
   return {
     program,

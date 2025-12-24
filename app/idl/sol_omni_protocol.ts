@@ -160,6 +160,9 @@ export type SolOmniProtocol = {
           "signer": true
         },
         {
+          "name": "driverToAssign"
+        },
+        {
           "name": "receiver"
         },
         {

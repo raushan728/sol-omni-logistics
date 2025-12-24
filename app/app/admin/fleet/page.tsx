@@ -4,18 +4,62 @@ import ThreeScene from "../../../components/ThreeScene";
 import { Truck, Shield, AlertTriangle } from "lucide-react";
 import useOmniProgram from "../../../hooks/useOmniProgram";
 import { useEffect, useState } from "react";
+import { PublicKey } from "@solana/web3.js";
+import { Loader2 } from "lucide-react";
 
 export default function FleetPage() {
-  const { getAllDrivers, emergencySwap } = useOmniProgram();
+  const { getAllDrivers, emergencySwap, registerDriver, wallet } =
+    useOmniProgram();
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Registration State
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [newDriver, setNewDriver] = useState({
+    name: "",
+    license: "",
+    wallet: "",
+  });
 
   useEffect(() => {
+    if (!wallet) return;
+
+    // 1. Reset State Cleanly
+    setIsLoading(true);
+    setDrivers([]);
+
     const fetch = async () => {
-      const data = await getAllDrivers();
-      if (data) setDrivers(data);
+      try {
+        // 2. Derive Current Company PDA
+        const [currentCompanyPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("company"), wallet.publicKey.toBuffer()],
+          new PublicKey("tyWeb5FudPxigpWFYeCP9yKwYHBxsqB3jwJa6bjzTJn")
+        );
+
+        // 3. Fetch ALL Drivers (Raw)
+        const allDrivers = await getAllDrivers(); // Passing no args to get RAW list
+
+        // 4. Strict Client-Side Filter
+        if (allDrivers) {
+          const myDrivers = allDrivers.filter(
+            (d: any) =>
+              d.account.company.toString() === currentCompanyPda.toString()
+          );
+          setDrivers(myDrivers);
+        }
+      } catch (e) {
+        console.error("Fleet Fetch Error:", e);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetch();
-  }, [getAllDrivers]);
+    // Poll every 10s
+    const interval = setInterval(fetch, 10000);
+    return () => clearInterval(interval);
+  }, [getAllDrivers, wallet]);
 
   const handleSwap = async (driverKey: string) => {
     const trackingId = prompt("ENTER SHIPMENT ID TO ASSIGN (Emergency Swap):");
@@ -27,6 +71,26 @@ export default function FleetPage() {
     } catch (e) {
       console.error(e);
       alert("Failed to swap/assign shipment.");
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegistering(true);
+    try {
+      await registerDriver(newDriver.name, newDriver.license, newDriver.wallet);
+      alert("Driver Personnel Registered On-Chain!");
+      setShowRegisterModal(false);
+      setNewDriver({ name: "", license: "", wallet: "" });
+
+      // Refresh list
+      const data = await getAllDrivers();
+      if (data) setDrivers(data);
+    } catch (err) {
+      console.error(err);
+      alert("Registration Failed. Ensure wallet is valid.");
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -43,10 +107,16 @@ export default function FleetPage() {
             Active Personnel & Assets
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#bd00ff]/10 border border-[#bd00ff]/30 text-[#bd00ff] text-xs font-bold uppercase shadow-[0_0_15px_rgba(189,0,255,0.2)]">
             <Truck className="w-4 h-4" /> {drivers.length} Registered
           </div>
+          <button
+            onClick={() => setShowRegisterModal(true)}
+            className="flex items-center gap-2 px-6 py-2 bg-[#00f3ff] hover:bg-[#00d0db] text-black font-bold text-xs uppercase rounded shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all active:scale-95"
+          >
+            + Register New Driver
+          </button>
         </div>
       </header>
 
@@ -105,6 +175,83 @@ export default function FleetPage() {
           })}
         </div>
       </div>
+
+      {/* Register Driver Modal */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-[#020617] border border-[#00f3ff]/50 rounded-2xl p-8 shadow-[0_0_50px_rgba(0,243,255,0.2)] relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowRegisterModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-bold text-white mb-6 tracking-widest uppercase text-center flex items-center justify-center gap-3">
+              <Truck className="w-6 h-6 text-[#00f3ff]" /> Recruit Driver
+            </h2>
+
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-[#00f3ff] uppercase tracking-wider">
+                  Driver Name
+                </label>
+                <input
+                  type="text"
+                  value={newDriver.name}
+                  onChange={(e) =>
+                    setNewDriver({ ...newDriver, name: e.target.value })
+                  }
+                  className="w-full mt-1 bg-white/5 border border-white/10 rounded px-4 py-3 text-white focus:outline-none focus:border-[#00f3ff]"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#00f3ff] uppercase tracking-wider">
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  value={newDriver.license}
+                  onChange={(e) =>
+                    setNewDriver({ ...newDriver, license: e.target.value })
+                  }
+                  className="w-full mt-1 bg-white/5 border border-white/10 rounded px-4 py-3 text-white focus:outline-none focus:border-[#00f3ff]"
+                  placeholder="LIC-1234-5678"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#00f3ff] uppercase tracking-wider">
+                  Wallet Address (Pubkey)
+                </label>
+                <input
+                  type="text"
+                  value={newDriver.wallet}
+                  onChange={(e) =>
+                    setNewDriver({ ...newDriver, wallet: e.target.value })
+                  }
+                  className="w-full mt-1 bg-white/5 border border-white/10 rounded px-4 py-3 text-white focus:outline-none focus:border-[#00f3ff]"
+                  placeholder="Solana Wallet Address"
+                  required
+                />
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={registering}
+                  className="w-full py-4 bg-[#00f3ff] hover:bg-[#00d0db] text-black font-bold uppercase tracking-widest rounded shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {registering ? "Processing Chain..." : "Confirm Recruitment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

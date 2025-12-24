@@ -20,6 +20,7 @@ export default function RegistrationForm({
   const {
     initializeCompany,
     registerDriver,
+    wallet,
     isLoading: isProgramLoading,
   } = useOmniProgram();
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +49,13 @@ export default function RegistrationForm({
         if (!driverName || !licenseNumber)
           throw new Error("All fields required");
         console.log("Registering driver:", driverName, licenseNumber);
-        const tx = await registerDriver(driverName, licenseNumber);
+
+        if (!wallet) throw new Error("Wallet not connected");
+        const tx = await registerDriver(
+          driverName,
+          licenseNumber,
+          wallet.publicKey.toString()
+        );
         if (tx) onSuccess();
       }
     } catch (err: any) {

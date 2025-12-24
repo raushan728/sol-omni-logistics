@@ -1,26 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PublicKey } from "@solana/web3.js";
 import dynamic from "next/dynamic";
 const CyberMap = dynamic(
   () => import("../../../components/Dashboard/CyberMap"),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-900 animate-pulse" />,
+  }
 );
 import useOmniProgram from "../../../hooks/useOmniProgram";
 import { Package, Truck, Users, Activity, Settings } from "lucide-react";
-import ThreeScene from "../../../components/ThreeScene";
 
 import Link from "next/link"; // Added Link
 import { Loader2 } from "lucide-react"; // Added Loader
+import { formatStatus, formatPrice } from "../../../utils/format";
 
 export default function AdminDashboard() {
-  const { getAllShipments, createShipment } = useOmniProgram();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const {
+    getAllShipments,
+    createShipment,
+    getAllDrivers,
+    emergencySwap,
+    wallet,
+    checkUserRole,
+  } = useOmniProgram();
   const [shipments, setShipments] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [stats, setStats] = useState({
     activeTrucks: 0,
     totalShipments: 0,
     totalRevenue: "0 SOL",
   });
+
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -28,37 +48,88 @@ export default function AdminDashboard() {
     receiver: "",
     price: "",
     trackingId: "",
+    driverKey: "",
   });
   const [creating, setCreating] = useState(false);
 
-  // Poll for updates (Real-time dashboard)
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getAllShipments();
-      if (data) {
-        setShipments(data);
+    if (!wallet) return;
 
-        // Calculate Stats
-        const active = data.filter(
-          (s: any) => s.account.status !== "Delivered"
-        ).length;
-        const revenue = data.reduce(
-          (acc: number, curr: any) => acc + (Number(curr.account.price) || 0),
-          0
+    // 1. Reset State Cleanly
+    setIsLoading(true);
+    setShipments([]);
+    setDrivers([]);
+    setStats({
+      activeTrucks: 0,
+      totalShipments: 0,
+      totalRevenue: "0 SOL",
+    });
+
+    const fetch = async () => {
+      try {
+        // 2. Derive Current Company PDA
+        const [currentCompanyPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("company"), wallet.publicKey.toBuffer()],
+          new PublicKey("tyWeb5FudPxigpWFYeCP9yKwYHBxsqB3jwJa6bjzTJn")
         );
 
-        setStats({
-          activeTrucks: active,
-          totalShipments: data.length,
-          totalRevenue: `${(revenue / 1000000000).toFixed(2)} SOL`,
-        });
+        // 3. Fetch ALL Data (Raw)
+        const [allShipments, allDrivers] = await Promise.all([
+          getAllShipments(),
+          getAllDrivers(),
+        ]);
+
+        if (allShipments) {
+          // 4. Strict Filter
+          const myShipments = allShipments.filter(
+            (s: any) =>
+              s.account.company.toString() === currentCompanyPda.toString()
+          );
+
+          setShipments(myShipments);
+
+          // Calculate Stats - SAFELY
+          const active = myShipments.filter((s: any) => {
+            // Use myShipments
+            const statusStr = formatStatus(s.account.status);
+            return statusStr !== "Delivered" && statusStr !== "Cancelled";
+          }).length;
+
+          const revenue = myShipments.reduce((acc: number, curr: any) => {
+            // Use myShipments
+            const val =
+              curr.account.price && curr.account.price.toNumber
+                ? curr.account.price.toNumber()
+                : 0;
+            return acc + val;
+          }, 0);
+
+          setStats({
+            activeTrucks: active,
+            totalShipments: myShipments.length,
+            totalRevenue: `${(revenue / 1000000000).toFixed(2)} SOL`,
+          });
+        }
+
+        if (allDrivers) {
+          const myDrivers = allDrivers.filter(
+            (d: any) =>
+              d.account.company.toString() === currentCompanyPda.toString()
+          );
+          setDrivers(myDrivers);
+        }
+      } catch (err) {
+        console.error("Dashboard Fetch Error:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
+    fetch();
+    const interval = setInterval(fetch, 30000);
     return () => clearInterval(interval);
-  }, [getAllShipments]);
+  }, [getAllShipments, getAllDrivers, wallet]);
+
   const markers = shipments.map((s) => ({
     id: s.publicKey.toString(),
     type: "truck" as const,
@@ -69,25 +140,57 @@ export default function AdminDashboard() {
     label: s.account.trackingId || "Unknown",
   }));
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#020617] text-[#00f3ff]">
+        <Loader2 className="w-12 h-12 animate-spin mb-4" />
+        <h2 className="text-xl font-bold tracking-widest uppercase animate-pulse">
+          Switching Environment...
+        </h2>
+        <p className="text-xs text-gray-500 font-mono mt-2">
+          Syncing Company Data
+        </p>
+      </div>
+    );
+  }
+
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
     try {
       const tid =
         newShipment.trackingId || `SHIP-${Math.floor(Math.random() * 10000)}`;
-      // receiver, price, trackingId
+
+      if (newShipment.trackingId && newShipment.trackingId.length < 4) {
+        throw new Error("Tracking ID must be at least 4 characters");
+      }
+      // receiver, price, trackingId, driverKey (Atomic Assignment)
       await createShipment(
         newShipment.receiver,
         Number(newShipment.price),
-        tid
+        tid,
+        newShipment.driverKey
       );
-      alert("Shipment Created Successfully!");
+
+      // Note: Assignment is now handled INSIDE createShipment instruction atomically.
+
+      alert(
+        newShipment.driverKey
+          ? "Shipment Initialized & Assigned via Atomic Transaction!"
+          : "Shipment Initialized (Unassigned)"
+      );
+
       setShowCreateModal(false);
-      setNewShipment({ receiver: "", price: "", trackingId: "" });
+      setNewShipment({
+        receiver: "",
+        price: "",
+        trackingId: "",
+        driverKey: "",
+      });
       // Force refresh logic could go here
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create shipment.");
+    } catch (err: any) {
+      console.error("SHIPMENT_ERROR:", err);
+      alert("Error: " + (err.message || "Failed to create shipment"));
     } finally {
       setCreating(false);
     }
@@ -163,11 +266,13 @@ export default function AdminDashboard() {
                   {s.account.trackingId}
                 </span>
                 <span
-                  className={`text-${
-                    s.account.status === "Delivered" ? "green" : "yellow"
-                  }-400 font-bold`}
+                  className={`font-bold ${
+                    formatStatus(s.account.status) === "Delivered"
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                  }`}
                 >
-                  {s.account.status}
+                  {formatStatus(s.account.status)}
                 </span>
               </div>
             ))}
@@ -227,10 +332,12 @@ export default function AdminDashboard() {
 
         {/* Map Area */}
         <div className="flex-1 relative z-0 w-full h-full">
-          <CyberMap
-            zoom={4} // Zoomed out for global view
-            markers={markers}
-          />
+          {mounted && (
+            <CyberMap
+              zoom={4} // Zoomed out for global view
+              markers={markers}
+            />
+          )}
 
           {/* Overlay Cards */}
           <div className="absolute top-4 right-4 w-72 bg-slate-950/80 backdrop-blur-md border border-white/10 p-4 rounded-xl pointer-events-auto z-[400] shadow-2xl">
@@ -322,6 +429,38 @@ export default function AdminDashboard() {
                   placeholder="Auto-generated if empty"
                   className="w-full mt-1 bg-white/5 border border-white/10 rounded px-4 py-3 text-white focus:outline-none focus:border-[#bd00ff]"
                 />
+                <p className="text-[10px] text-gray-500 mt-1">
+                  * Tracking ID must be unique on-chain
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#bd00ff] uppercase tracking-wider">
+                  Assign Driver (Optional)
+                </label>
+                <select
+                  value={newShipment.driverKey}
+                  onChange={(e) =>
+                    setNewShipment({
+                      ...newShipment,
+                      driverKey: e.target.value,
+                    })
+                  }
+                  className="w-full mt-1 bg-[#020617] border border-cyan-500/30 rounded px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="" className="bg-[#020617]">
+                    -- Select Driver --
+                  </option>
+                  {drivers.map((d: any) => (
+                    <option
+                      key={d.publicKey.toString()}
+                      value={d.publicKey.toString()}
+                      className="bg-[#020617] text-white"
+                    >
+                      {d.account.name} ({d.account.status || "Active"})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex gap-4 mt-8">

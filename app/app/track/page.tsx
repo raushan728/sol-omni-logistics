@@ -12,7 +12,16 @@ export default function TrackPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (trackingId.trim()) {
-      router.push(`/track/${trackingId}`);
+      let formattedId = trackingId.trim().toUpperCase();
+      // Auto-prefix if user just types numbers
+      if (!formattedId.startsWith("SHIP-")) {
+        // Check if it's likely a ship ID (e.g. 4 numeric digits or just a number)
+        // We'll just assume they meant SHIP-ID if it's short
+        if (/^\d+$/.test(formattedId) || formattedId.length < 5) {
+          formattedId = `SHIP-${formattedId}`;
+        }
+      }
+      router.push(`/track/${formattedId}`);
     }
   };
 
