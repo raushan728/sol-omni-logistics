@@ -50,21 +50,18 @@ export default function AdminDashboard() {
         setStats({
           activeTrucks: active,
           totalShipments: data.length,
-          totalRevenue: `${(revenue / 1000000000).toFixed(2)} SOL`, // Lamports to SOL
+          totalRevenue: `${(revenue / 1000000000).toFixed(2)} SOL`,
         });
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000); // 30s poll
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [getAllShipments]);
-
-  // Transform shipments to markers
   const markers = shipments.map((s) => ({
     id: s.publicKey.toString(),
     type: "truck" as const,
-    // Fallback if lat/lng missing or 0
     position: {
       lat: s.account.currentLat || 37.7749,
       lng: s.account.currentLng || -122.4194,
@@ -97,22 +94,21 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="w-full h-screen relative bg-[#020617] text-white overflow-hidden flex">
-      {/* Background */}
-      <ThreeScene className="fixed inset-0 opacity-20" />
+    <div className="w-full h-[calc(100vh-6rem)] relative text-white overflow-hidden flex">
+      {/* Note: ThreeScene removed as it is global now */}
 
       {/* Sidebar with Neon Glow */}
-      <aside className="w-20 md:w-64 border-r border-[#00f3ff]/20 bg-black/40 backdrop-blur-xl flex flex-col z-50 shadow-[5px_0_30px_rgba(0,243,255,0.1)]">
+      <aside className="w-20 md:w-64 border-r border-[#00f3ff]/20 bg-slate-950/60 backdrop-blur-md flex flex-col z-40 shadow-[5px_0_30px_rgba(0,243,255,0.1)] h-full">
         <div className="p-6">
           <h1 className="hidden md:block text-[#00f3ff] font-bold text-xl tracking-widest drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">
-            OMNI-ADMIN
+            COMMAND
           </h1>
-          <div className="md:hidden text-[#00f3ff] font-bold text-xl">OA</div>
+          <div className="md:hidden text-[#00f3ff] font-bold text-xl">CMD</div>
         </div>
 
         <nav className="flex-1 space-y-4 px-4 mt-8">
           <Link href="/admin/dashboard">
-            <div className="flex items-center gap-4 p-3 rounded-lg cursor-pointer bg-[#00f3ff]/10 text-[#00f3ff] border border-[#00f3ff]/30">
+            <div className="flex items-center gap-4 p-3 rounded-lg cursor-pointer bg-[#00f3ff]/10 text-[#00f3ff] border border-[#00f3ff]/30 shadow-[0_0_15px_rgba(0,243,255,0.2)]">
               <Activity className="w-6 h-6" />
               <span className="hidden md:block font-medium tracking-wide text-sm">
                 Overview
@@ -149,25 +145,27 @@ export default function AdminDashboard() {
         <div className="p-4">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full py-3 bg-[#bd00ff] hover:bg-[#a200db] rounded-lg text-white font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(189,0,255,0.4)] transition-all active:scale-95"
+            className="w-full py-3 bg-[#bd00ff] hover:bg-[#a200db] rounded-lg text-white font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(189,0,255,0.4)] transition-all active:scale-95 border border-[#bd00ff]/50"
           >
             + New Shipment
           </button>
         </div>
 
         {/* Active Shipments Mini-List */}
-        <div className="p-4 border-t border-white/10 hidden md:block">
+        <div className="p-4 border-t border-white/10 hidden md:block bg-black/20">
           <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">
             Recent Activity
           </h3>
           <div className="space-y-2 h-32 overflow-y-auto custom-scrollbar">
             {shipments.slice(0, 5).map((s, i) => (
               <div key={i} className="text-xs flex justify-between">
-                <span className="text-white">{s.account.trackingId}</span>
+                <span className="text-white font-mono">
+                  {s.account.trackingId}
+                </span>
                 <span
                   className={`text-${
                     s.account.status === "Delivered" ? "green" : "yellow"
-                  }-400`}
+                  }-400 font-bold`}
                 >
                   {s.account.status}
                 </span>
@@ -178,43 +176,66 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative z-0">
+      <main className="flex-1 flex flex-col relative z-0 h-full">
         {/* Top Stats Bar */}
-        <header className="h-16 border-b border-white/10 bg-black/20 backdrop-blur-sm flex items-center justify-between px-8 z-20">
-          <h2 className="text-lg font-medium text-gray-300">
-            Global Operations Map
-          </h2>
+        <header className="h-20 border-b border-white/10 bg-slate-950/60 backdrop-blur-md flex items-center justify-between px-8 z-30 shadow-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#00ff9d] animate-pulse" />
+            <h2 className="text-lg font-bold tracking-wider text-white">
+              GLOBAL OPS{" "}
+              <span className="text-gray-500 text-sm font-normal">
+                | LIVE MAP
+              </span>
+            </h2>
+          </div>
           <div className="flex gap-6">
-            <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-[#bd00ff]" />
-              <span className="text-sm font-bold">
-                {stats.activeTrucks} Active
-              </span>
+            <div className="flex items-center gap-3 px-4 py-2 rounded bg-black/30 border border-white/5">
+              <Truck className="w-5 h-5 text-[#bd00ff]" />
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-400 uppercase font-bold">
+                  Fleet Active
+                </span>
+                <span className="text-sm font-bold text-white leading-none">
+                  {stats.activeTrucks} UNITS
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Package className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-bold">
-                {stats.totalShipments} Total
-              </span>
+            <div className="flex items-center gap-3 px-4 py-2 rounded bg-black/30 border border-white/5">
+              <Package className="w-5 h-5 text-cyan-400" />
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-400 uppercase font-bold">
+                  Volume
+                </span>
+                <span className="text-sm font-bold text-white leading-none">
+                  {stats.totalShipments} BOXES
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#00ff9d]" />
-              <span className="text-sm font-bold">{stats.totalRevenue}</span>
+            <div className="flex items-center gap-3 px-4 py-2 rounded bg-black/30 border border-white/5">
+              <Activity className="w-5 h-5 text-[#00ff9d]" />
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-400 uppercase font-bold">
+                  Revenue
+                </span>
+                <span className="text-sm font-bold text-white leading-none">
+                  {stats.totalRevenue}
+                </span>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Map Area */}
-        <div className="flex-1 relative z-0">
+        <div className="flex-1 relative z-0 w-full h-full">
           <CyberMap
             zoom={4} // Zoomed out for global view
             markers={markers}
           />
 
           {/* Overlay Cards */}
-          <div className="absolute top-4 right-4 w-64 bg-black/80 backdrop-blur-md border border-white/10 p-4 rounded-lg pointer-events-auto z-[400]">
-            <h3 className="text-[#00f3ff] text-xs font-bold uppercase mb-3">
-              Live Feed
+          <div className="absolute top-4 right-4 w-72 bg-slate-950/80 backdrop-blur-md border border-white/10 p-4 rounded-xl pointer-events-auto z-[400] shadow-2xl">
+            <h3 className="text-[#00f3ff] text-xs font-bold uppercase mb-3 flex items-center gap-2">
+              <Activity className="w-3 h-3" /> Live Feed
             </h3>
             <div className="space-y-3">
               {shipments.length > 0 ? (
@@ -225,13 +246,20 @@ export default function AdminDashboard() {
                   >
                     <div className="w-2 h-2 rounded-full bg-[#00ff9d] animate-pulse" />
                     <span className="text-gray-300">
-                      Shipment #{s.account.trackingId} updated
+                      ID{" "}
+                      <span className="text-white font-mono">
+                        {s.account.trackingId}
+                      </span>
                     </span>
-                    <span className="ml-auto text-gray-500">Now</span>
+                    <span className="ml-auto text-gray-500 font-mono text-[10px]">
+                      Just Now
+                    </span>
                   </div>
                 ))
               ) : (
-                <div className="text-gray-500 text-xs">No active shipments</div>
+                <div className="text-gray-500 text-xs italic">
+                  No active data stream
+                </div>
               )}
             </div>
           </div>
@@ -240,10 +268,14 @@ export default function AdminDashboard() {
 
       {/* Create Shipment Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-[#020617] border border-[#bd00ff]/50 rounded-2xl p-8 shadow-[0_0_50px_rgba(189,0,255,0.2)]">
-            <h2 className="text-2xl font-bold text-white mb-6 tracking-widest uppercase text-center">
-              New Shipment
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#020617] border border-[#bd00ff]/50 rounded-2xl p-8 shadow-[0_0_50px_rgba(189,0,255,0.2)] relative">
+            {/* 3D Decorative Modal Elements */}
+            <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#bd00ff]/20 blur-3xl rounded-full pointer-events-none" />
+            <div className="absolute -bottom-10 -right-10 w-20 h-20 bg-[#00f3ff]/20 blur-3xl rounded-full pointer-events-none" />
+
+            <h2 className="text-2xl font-bold text-white mb-6 tracking-widest uppercase text-center flex items-center justify-center gap-3">
+              <Package className="w-6 h-6 text-[#bd00ff]" /> New Shipment
             </h2>
             <form onSubmit={handleCreateShipment} className="space-y-4">
               <div>

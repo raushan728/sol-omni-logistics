@@ -17,8 +17,8 @@ export default function TrackPage() {
   };
 
   return (
-    <div className="w-full h-screen relative bg-[#020617] text-white overflow-hidden flex flex-col items-center justify-center p-4">
-      <ThreeScene className="fixed inset-0 opacity-40 pointer-events-none" />
+    <div className="w-full flex-1 relative text-white overflow-hidden flex flex-col items-center justify-center p-4">
+      {/* ThreeScene removed */}
 
       <div className="relative z-10 max-w-md w-full">
         <div className="text-center mb-10">
@@ -34,7 +34,7 @@ export default function TrackPage() {
           <div className="absolute -inset-1 bg-gradient-to-r from-[#00f3ff] to-[#bd00ff] rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
           <form
             onSubmit={handleSearch}
-            className="relative flex bg-black border border-white/10 rounded-lg p-1"
+            className="relative flex bg-slate-950/80 backdrop-blur-md border border-white/10 rounded-lg p-1"
           >
             <input
               type="text"

@@ -86,16 +86,16 @@ export default function DriverDashboard() {
     : [];
 
   return (
-    <div className="w-full h-screen relative bg-[#020617] text-white overflow-hidden flex flex-col">
-      <ThreeScene className="fixed inset-0 opacity-20" />
+    <div className="w-full flex-1 relative text-white flex flex-col overflow-hidden">
+      {/* ThreeScene removed */}
 
       {/* HUD Header */}
-      <header className="relative z-10 p-6 flex justify-between items-center bg-black/40 backdrop-blur-md border-b border-white/10">
+      <header className="relative z-10 p-6 flex justify-between items-center bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold tracking-widest text-[#00ff9d] drop-shadow-[0_0_10px_rgba(0,255,157,0.5)]">
             DRIVER HUD
           </h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 font-mono">
             UNIT:{" "}
             {publicKey ? publicKey.toString().slice(0, 8) : "DISCONNECTED"}
           </p>
@@ -103,10 +103,10 @@ export default function DriverDashboard() {
         <div className="flex gap-4">
           <button
             onClick={handleToggleStatus}
-            className={`px-4 py-2 border rounded font-bold uppercase text-xs flex items-center gap-2 transition-all ${
+            className={`px-4 py-2 border rounded font-bold uppercase text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] ${
               status === "Active"
-                ? "border-[#00ff9d]/30 text-[#00ff9d] bg-[#00ff9d]/10"
-                : "border-red-500/30 text-red-500 bg-red-500/10"
+                ? "border-[#00ff9d]/30 text-[#00ff9d] bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20"
+                : "border-red-500/30 text-red-500 bg-red-500/10 hover:bg-red-500/20"
             }`}
           >
             {status === "Active" ? (
@@ -119,16 +119,16 @@ export default function DriverDashboard() {
         </div>
       </header>
 
-      <main className="flex-1 relative z-0 flex">
+      <main className="flex-1 relative z-0 flex h-full">
         {/* Map Section */}
-        <div className="flex-1 relative border-r border-white/10">
+        <div className="flex-1 relative border-r border-white/10 h-full">
           <CyberMap zoom={6} markers={mapMarkers} />
           {/* Floating Controls */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-[400]">
+          <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-[400] w-full flex justify-center pointer-events-none">
             <button
               onClick={handleSyncGPS}
               disabled={gpsLoading}
-              className="px-8 py-4 bg-[#bd00ff] hover:bg-[#a200db] rounded-full text-white font-bold tracking-widest uppercase shadow-[0_0_30px_rgba(189,0,255,0.5)] flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+              className="pointer-events-auto px-8 py-4 bg-[#bd00ff] hover:bg-[#a200db] rounded-full text-white font-bold tracking-widest uppercase shadow-[0_0_30px_rgba(189,0,255,0.6)] flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 border border-[#bd00ff]/50 backdrop-blur-sm"
             >
               {gpsLoading ? (
                 <Navigation className="animate-spin w-5 h-5" />
@@ -141,50 +141,54 @@ export default function DriverDashboard() {
         </div>
 
         {/* Shipment Info Panel */}
-        <aside className="w-80 bg-black/60 backdrop-blur-xl p-6 flex flex-col">
-          <h2 className="text-[#00f3ff] text-sm font-bold uppercase mb-6 tracking-wider border-b border-[#00f3ff]/20 pb-2">
-            Current Mission
+        <aside className="w-80 bg-slate-950/80 backdrop-blur-xl p-6 flex flex-col border-l border-white/10 h-full shadow-2xl">
+          <h2 className="text-[#00f3ff] text-sm font-bold uppercase mb-6 tracking-wider border-b border-[#00f3ff]/20 pb-2 flex items-center gap-2">
+            <Truck className="w-4 h-4" /> Current Mission
           </h2>
 
           {activeShipment ? (
             <div className="space-y-6">
               <div>
-                <label className="text-gray-500 text-xs uppercase">
+                <label className="text-gray-500 text-xs uppercase font-bold">
                   Tracking ID
                 </label>
-                <div className="text-xl font-mono text-white dashed-underline">
+                <div className="text-xl font-mono text-white dashed-underline drop-shadow-md">
                   {activeShipment.account.trackingId}
                 </div>
               </div>
               <div>
-                <label className="text-gray-500 text-xs uppercase">
+                <label className="text-gray-500 text-xs uppercase font-bold">
                   Destination
                 </label>
-                <div className="text-sm text-gray-300">
+                <div className="text-sm text-gray-300 bg-black/30 p-2 rounded border border-white/5 mt-1">
                   {activeShipment.account.destination ||
                     "Coordinates Encrypted"}
                 </div>
               </div>
               <div>
-                <label className="text-gray-500 text-xs uppercase">
+                <label className="text-gray-500 text-xs uppercase font-bold">
                   Cargo Value
                 </label>
-                <div className="text-sm text-[#bd00ff] font-mono">
+                <div className="text-sm text-[#bd00ff] font-mono font-bold">
                   {(Number(activeShipment.account.price) / 1e9).toFixed(2)} SOL
                 </div>
               </div>
 
               <div className="mt-auto pt-8">
-                <div className="p-4 rounded bg-[#00ff9d]/5 border border-[#00ff9d]/20 text-[#00ff9d] text-xs text-center uppercase tracking-widest animate-pulse">
+                <div className="p-4 rounded bg-[#00ff9d]/5 border border-[#00ff9d]/20 text-[#00ff9d] text-xs text-center uppercase tracking-widest animate-pulse font-bold shadow-[0_0_10px_rgba(0,255,157,0.1)]">
                   En Route
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center text-gray-500 py-10">
-              <Truck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">No Active Assignments</p>
-              <p className="text-xs mt-2">Standby at Depot</p>
+            <div className="text-center text-gray-500 py-10 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <Truck className="w-8 h-8 opacity-50" />
+              </div>
+              <p className="text-sm font-bold text-gray-400">
+                No Active Assignments
+              </p>
+              <p className="text-xs mt-2 text-gray-600">Standby at Depot</p>
             </div>
           )}
         </aside>

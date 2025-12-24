@@ -38,11 +38,11 @@ export default function RootLayout({
           <ThreeScene className="fixed inset-0" />
 
           {/* UI Overlay */}
-          <div className="relative z-10 w-full min-h-screen flex flex-col">
-            {/* Header */}
-            <header className="w-full p-6 flex justify-between items-center bg-transparent pointer-events-none">
+          <div className="relative z-10 w-full min-h-screen flex flex-col font-sans">
+            {/* Header - Fixed absolute to stay on top but allow scroll behind if needed, or just normal flow */}
+            <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-gradient-to-b from-[#020617]/90 to-transparent pointer-events-none transition-all duration-300">
               <div className="pointer-events-auto flex items-center gap-4">
-                <div className="font-bold text-xl tracking-widest text-[#00f3ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">
+                <div className="font-bold text-2xl tracking-[0.2em] text-[#00f3ff] drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] filter contrast-125">
                   SOL-OMNI
                 </div>
               </div>
@@ -51,10 +51,12 @@ export default function RootLayout({
               </div>
             </header>
 
-            {/* Main Content */}
-            <SmoothScroll>
-              <PageTransition>{children}</PageTransition>
-            </SmoothScroll>
+            {/* Main Content - Padded from top to avoid header overlap */}
+            <main className="flex-1 flex flex-col w-full pt-24">
+              <SmoothScroll>
+                <PageTransition>{children}</PageTransition>
+              </SmoothScroll>
+            </main>
           </div>
         </WalletProvider>
       </body>
