@@ -1,54 +1,44 @@
 "use client";
 
-import ThreeButton from "../components/ThreeButton";
-import { Canvas } from "@react-three/fiber"; // We need a canvas for the buttons if they are 3D
-// Wait, ThreeButton is a R3F component, it must be INSIDE a Canvas.
-// Our ThreeScene is in the background. If we want interactive 3D buttons in the UI flow,
-// we might need a View or a separate Canvas, or use HTML overlay.
-// The user asked for "ThreeButton.tsx ... give a physical 'press' effect".
-// If standard DOM buttons, we use framer-motion. If R3F objects, they live in ThreeScene.
-// Let's assume the user wants 3D objects in the scene or "3D-styled" DOM elements.
-// "Create a reusable Canvas component... that will host my 3D objects."
-// "Create a ThreeButton... physical 'press' effect".
-// I'll make the main page add content TO the 3D scene (or show how to).
-// BUT, separating UI and 3D is tricky if they need to overlap.
-// FOR NOW, I will instantiate standard DOM elements for the specific page content
-// and maybe portals for 3D?
-// Actually, let's keep it simple: The 'ThreeButton' I made returns a <mesh>, so it MUST be in a canvas.
-// I will add a localized Canvas for the "World" or buttons.
-// However, having a full screen background canvas is already there.
-// Let's demo the button inside the background Scene by using a Portal or just showing it layout-wise.
-
-// Actually, to make it easier, I will update ThreeScene to accept children? It already does.
-// But we can't easily inject from page components into the layout's canvas without a store/portal.
-// For this task, I'll put a Canvas in the page content for the "World" view.
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 pointer-events-none">
-      <div className="z-10 text-center space-y-8 pointer-events-auto">
-        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00f3ff] to-[#bd00ff] drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">
-          CYBER LOGISTICS
-        </h1>
-        <p className="text-[#ededed] text-lg max-w-xl mx-auto glass-panel p-6 rounded-xl">
-          Next-Gen Decentralized Supply Chain Management on Solana.
-          <br />
-          <span className="text-sm opacity-60">
-            Initialize the world to begin.
-          </span>
-        </p>
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
-        {/* Placeholder for where 3D interaction happens */}
-        <div className="w-full h-64 border border-[#00f3ff]/20 rounded-xl relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center text-[#00f3ff]/50">
-            [ 3D INTERACTIVE ZONE PREVIEW ]
-          </div>
-          {/* 
-                In a real app, I'd use the tunnel-rat or separate Canvas here.
-                For now, the background ThreeScene is running.
-             */}
-        </div>
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen text-center z-10 pointer-events-none">
+      {/* 3D Scene Background is handled in layout.tsx */}
+
+      <div className="pointer-events-auto bg-black/40 backdrop-blur-md p-10 rounded-2xl border border-glass-border shadow-[0_0_50px_rgba(0,243,255,0.2)]">
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-white to-neon-purple drop-shadow-[0_0_15px_rgba(0,243,255,0.8)] mb-4">
+          SOL-OMNI
+        </h1>
+        <h2 className="text-xl md:text-2xl text-gray-300 tracking-[0.5em] font-light mb-8">
+          CYBER LOGISTICS
+        </h2>
+
+        {mounted && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div
+              className="cursor-pointer inline-block px-8 py-4 bg-neon-blue/10 border border-neon-blue hover:bg-neon-blue/20 transition-all rounded-none text-neon-blue font-bold tracking-widest hover:scale-105 hover:shadow-[0_0_20px_rgba(0,243,255,0.5)]"
+              onClick={() => router.push("/onboarding")}
+            >
+              ENTER WORLD
+            </div>
+          </motion.div>
+        )}
       </div>
-    </main>
+    </div>
   );
 }

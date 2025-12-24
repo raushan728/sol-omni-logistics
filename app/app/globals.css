@@ -1,48 +1,54 @@
 @import "tailwindcss";
 
-@theme {
+:root {
+  /* Theme Colors - Cyber Enterprise Only */
   --color-neon-blue: #00f3ff;
   --color-neon-purple: #bd00ff;
   --color-neon-green: #00ff9d;
-  --color-dark-bg: #050505;
-  --color-glass-border: rgba(255, 255, 255, 0.1);
-  --color-glass-bg: rgba(255, 255, 255, 0.05);
+  
+  /* Deep Space Background */
+  --bg-primary: #020617;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(2, 6, 23, 0.7);
+  --glass-border: rgba(0, 243, 255, 0.2);
 }
 
-:root {
-  --background: var(--color-dark-bg);
-  --foreground: #ededed;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--color-dark-bg);
-    --foreground: #ededed;
-  }
+/* Cleanup: Metadata only */
+:root.light {
+  /* DEPRECATED - Fallback to dark just in case */
+  --bg-primary: #020617;
+  --text-primary: #ffffff;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  overflow-x: hidden; /* Prevent horizontal scroll from 3D elements */
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.5s ease, color 0.5s ease;
+  overflow-x: hidden;
 }
 
-/* Custom Utilities for Glassmorphism */
-@utility glass-panel {
-  background: var(--color-glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--color-glass-border);
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-@utility neon-text-blue {
-  color: var(--color-neon-blue);
-  text-shadow: 0 0 10px var(--color-neon-blue), 0 0 20px var(--color-neon-blue);
+.neon-text-blue {
+    color: var(--color-neon-blue);
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.7);
 }
 
-@utility neon-text-purple {
-  color: var(--color-neon-purple);
-  text-shadow: 0 0 10px var(--color-neon-purple),
-    0 0 20px var(--color-neon-purple);
+.neon-text-purple {
+    color: var(--color-neon-purple);
+    text-shadow: 0 0 10px rgba(189, 0, 255, 0.7);
 }
+
+

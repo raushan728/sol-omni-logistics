@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useEffect, useState } from "react";
 import {
   ConnectionProvider,
   WalletProvider as SolanaWalletProvider,
@@ -20,17 +20,23 @@ interface WalletProviderProps {
 }
 
 export default function WalletProvider({ children }: WalletProviderProps) {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Devnet;
+  const [mounted, setMounted] = useState(false);
 
-  // You can also provide a custom RPC endpoint.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   const wallets = useMemo(
     () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [network]
   );
+
+  if (!mounted) {
+    return null; // or a loading spinner
+  }
 
   return (
     <ConnectionProvider endpoint={endpoint}>

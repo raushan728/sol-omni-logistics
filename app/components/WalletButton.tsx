@@ -1,10 +1,6 @@
 "use client";
 
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import styled from "styled-components"; // Or use CSS/Tailwind wrapper
-
-// We can wrap the standard button or build a custom one.
-// For "Cyber-Enterprise", let's wrap it to match the neon theme.
 
 export default function WalletButton() {
   return (
