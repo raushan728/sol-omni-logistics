@@ -1,0 +1,935 @@
+{
+  "address": "tyWeb5FudPxigpWFYeCP9yKwYHBxsqB3jwJa6bjzTJn",
+  "metadata": {
+    "name": "sol_omni_protocol",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "confirm_delivery",
+      "discriminator": [
+        11,
+        109,
+        227,
+        53,
+        179,
+        190,
+        88,
+        155
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "shipment.tracking_id",
+                "account": "Shipment"
+              }
+            ]
+          }
+        },
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_shipment",
+      "discriminator": [
+        67,
+        64,
+        17,
+        114,
+        30,
+        143,
+        249,
+        247
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "tracking_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sender"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "receiver"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "tracking_id",
+          "type": "string"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit_gas",
+      "discriminator": [
+        164,
+        223,
+        20,
+        23,
+        50,
+        107,
+        168,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "company"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "emergency_swap",
+      "discriminator": [
+        73,
+        226,
+        248,
+        215,
+        5,
+        197,
+        211,
+        229
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true
+        },
+        {
+          "name": "company",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_driver_profile",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  114,
+                  105,
+                  118,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "new_driver_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_driver_wallet"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "company"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_company",
+      "discriminator": [
+        75,
+        156,
+        55,
+        94,
+        184,
+        64,
+        58,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reg_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "raise_dispute",
+      "discriminator": [
+        41,
+        243,
+        1,
+        51,
+        150,
+        95,
+        246,
+        73
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "reason_hash",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "register_driver",
+      "discriminator": [
+        111,
+        15,
+        228,
+        191,
+        92,
+        150,
+        88,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "driver_profile",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  114,
+                  105,
+                  118,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "driver_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "driver_wallet"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "company"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "license_no",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "resolve_dispute",
+      "discriminator": [
+        231,
+        6,
+        202,
+        6,
+        96,
+        103,
+        12,
+        230
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "shipment.tracking_id",
+                "account": "Shipment"
+              }
+            ]
+          }
+        },
+        {
+          "name": "company",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "company"
+          ]
+        },
+        {
+          "name": "refund_receiver",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "winner_takes_all",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_location",
+      "discriminator": [
+        136,
+        21,
+        137,
+        105,
+        147,
+        171,
+        2,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "shipment",
+          "writable": true
+        },
+        {
+          "name": "driver_profile",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  114,
+                  105,
+                  118,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "driver_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "driver_wallet",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lng",
+          "type": "f64"
+        }
+      ]
+    },
+    {
+      "name": "update_settings",
+      "discriminator": [
+        81,
+        166,
+        51,
+        213,
+        158,
+        84,
+        157,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "company",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  112,
+                  97,
+                  110,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "company"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_name",
+          "type": {
+            "option": "string"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Company",
+      "discriminator": [
+        32,
+        212,
+        52,
+        137,
+        90,
+        7,
+        206,
+        183
+      ]
+    },
+    {
+      "name": "Driver",
+      "discriminator": [
+        4,
+        85,
+        37,
+        116,
+        50,
+        52,
+        176,
+        177
+      ]
+    },
+    {
+      "name": "Shipment",
+      "discriminator": [
+        3,
+        65,
+        195,
+        72,
+        154,
+        63,
+        211,
+        213
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "You are not authorized to perform this action."
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientGasTank",
+      "msg": "The company gas tank is empty."
+    },
+    {
+      "code": 6002,
+      "name": "DriverBusy",
+      "msg": "Driver is currently on another delivery."
+    },
+    {
+      "code": 6003,
+      "name": "InvalidLocation",
+      "msg": "Invalid location data provided."
+    },
+    {
+      "code": 6004,
+      "name": "AlreadyDelivered",
+      "msg": "Shipment is already delivered."
+    },
+    {
+      "code": 6005,
+      "name": "AdminApprovalRequired",
+      "msg": "Emergency Swap requires admin approval."
+    },
+    {
+      "code": 6006,
+      "name": "DriverIsSick",
+      "msg": "Driver is marked as sick and cannot take orders."
+    }
+  ],
+  "types": [
+    {
+      "name": "Company",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "registration_id",
+            "type": "string"
+          },
+          {
+            "name": "gas_tank_balance",
+            "type": "u64"
+          },
+          {
+            "name": "total_drivers",
+            "type": "u32"
+          },
+          {
+            "name": "total_shipments",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Driver",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "company",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "license_no",
+            "type": "string"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "is_sick",
+            "type": "bool"
+          },
+          {
+            "name": "rating",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Shipment",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "company",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "current_driver",
+            "type": "pubkey"
+          },
+          {
+            "name": "receiver",
+            "type": "pubkey"
+          },
+          {
+            "name": "tracking_id",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ShipmentStatus"
+              }
+            }
+          },
+          {
+            "name": "location_lat",
+            "type": "f64"
+          },
+          {
+            "name": "location_lng",
+            "type": "f64"
+          },
+          {
+            "name": "last_update_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ShipmentStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Created"
+          },
+          {
+            "name": "InTransit"
+          },
+          {
+            "name": "HandoverProcess"
+          },
+          {
+            "name": "Delivered"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Disputed"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "SEED_COMPANY",
+      "type": "bytes",
+      "value": "[99, 111, 109, 112, 97, 110, 121]"
+    },
+    {
+      "name": "SEED_DRIVER",
+      "type": "bytes",
+      "value": "[100, 114, 105, 118, 101, 114]"
+    },
+    {
+      "name": "SEED_SHIPMENT",
+      "type": "bytes",
+      "value": "[115, 104, 105, 112, 109, 101, 110, 116]"
+    }
+  ]
+}
